@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "Event.h"
+#import "UserProfile.h"
 
 @interface EventsViewController : UIViewController<UITableViewDelegate, UITableViewDataSource>
 

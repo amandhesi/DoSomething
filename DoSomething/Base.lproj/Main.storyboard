@@ -192,13 +192,42 @@
                     <view key="view" contentMode="scaleToFill" id="WI7-Os-S1Z">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="iCc-0y-2cE">
+                                <rect key="frame" x="0.0" y="66" width="320" height="451"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </tableView>
+                        </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
                     <navigationItem key="navigationItem" title="Chats" id="ZQK-TS-uC2"/>
+                    <connections>
+                        <segue destination="b5f-4e-fzT" kind="push" id="MrF-Gs-Btf"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="WVP-AP-tXZ" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1363" y="564"/>
+        </scene>
+        <!--View Controller - Chat-->
+        <scene sceneID="EMJ-B2-8dF">
+            <objects>
+                <viewController title="Chat" id="b5f-4e-fzT" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="g7D-6y-9YR"/>
+                        <viewControllerLayoutGuide type="bottom" id="vD7-Ly-q3b"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="umY-Bc-vcH">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Chat" id="fGX-gM-GCh"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="3FR-wL-clR" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1859" y="564"/>
         </scene>
         <!--Login View Controller - Login-->
         <scene sceneID="dQQ-Hp-QTc">

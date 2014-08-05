@@ -23,16 +23,14 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
-    [self checkFacebookAuth];
-    //[Event createSomeArtificialEvents];
-    //[UserProfile createSomeArtificialUsers];
-    [self doInitialSetup];
-    
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    [self checkFacebookAuth];
+    //[UserProfile createSomeArtificialUsers];
+    //[UserProfile makeEveryoneLikeAllEvents];
 }
 
 - (BackendHelper *)backendHelper
@@ -80,8 +78,10 @@
     {
         [FBRequestConnection startForMeWithCompletionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
             if (!error)
-//                NSLog(@"user info: %@", result);
+            {
                 NSLog(@"FB authentication succesful");
+                [self doInitialSetup];
+            }
             else
                 [self.backendHelper handleAuthError:error];
         }];

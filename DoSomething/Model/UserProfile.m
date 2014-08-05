@@ -64,32 +64,11 @@
     return self;
 }
 
-//- (NSMutableArray *)eventsLiked
-//{
-//    if(!_eventsLiked)
-//        _eventsLiked = [[NSMutableArray alloc] init];
-//    return _eventsLiked;
-//}
-//
-//- (NSMutableArray *)usersLiked
-//{
-//    if (!_usersLiked)
-//        _usersLiked = [[NSMutableArray alloc] init];
-//    return _usersLiked;
-//}
-//
-//- (NSMutableArray *)usersRejected
-//{
-//    if (!_usersRejected)
-//        _usersRejected = [[NSMutableArray alloc] init];
-//    return _usersRejected;
-//}
-
 + (void)loadCurrentUserFromParseWithBlock:(void(^)(UserProfile *, NSError *, NSInteger))block
 {
     PFQuery *query = [PFQuery queryWithClassName:@"UserProfile"];
     [query whereKey:@"PFUser" equalTo:[PFUser currentUser]];
-    [query includeKey:@"eventsLiked"];
+    //[query includeKey:@"eventsLiked"];
     //[query includeKey:@"usersLiked"];
     //[query includeKey:@"usersRejected"];
     [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
@@ -146,7 +125,7 @@
         if (!error)
         {
             UserProfile *profile = [[UserProfile alloc] initWithFBResult:result];
-            [profile.object setObject:[PFUser currentUser] forKey:@"PFUser"];
+            profile.object[@"PFUser"] = [PFUser currentUser];
             block(profile, error, -1);
             __block int i = 0;
             NSURL *pictureURL = [NSURL URLWithString: result[@"picture"][@"data"][@"url"]];
@@ -170,6 +149,11 @@
     }];
 }
 
+- (void) refreshObjectWithBlock:(void(^)(NSError *))block
+{
+    block(nil);
+}
+
 - (void) saveToParseWithBlock:(void(^)(NSError *))block
 {
     self.object[@"firstname"] = self.firstname;
@@ -180,7 +164,9 @@
     self.object[@"eventsLiked"] = self.eventsLiked;
     self.object[@"usersLiked"] = self.usersLiked;
     self.object[@"usersRejected"] = self.usersRejected;
-    [self.object saveInBackground];
+    [self.object saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        block(error);
+    }];
 }
 
 - (void) saveToParseIncludingImagesWithBlock:(void(^)(NSError *))block
@@ -202,32 +188,133 @@
         i++;
     }
     self.object[@"images"] = images;
-    [self.object saveInBackground];
+    [self.object saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        block(error);
+    }];
 }
+
+
+- (void)likeUser:(UserProfile *)userProfile withBlock:(void(^)(NSError *))block
+{
+    [self.usersLiked addObject:userProfile.object.objectId];
+    [self saveToParseWithBlock:block];
+}
+
+- (void)rejectUser:(UserProfile *)userProfile withBlock:(void(^)(NSError *))block
+{
+    [self.usersRejected addObject:userProfile.object.objectId];
+    [self saveToParseWithBlock:block];
+}
+
+- (void)likeEvent:(Event *)event withBlock:(void(^)(NSError *))block
+{
+    [self.eventsLiked addObject:event.object.objectId];
+    [self saveToParseWithBlock:block];
+}
+
+- (void)unlikeEvent:(Event *)event withBlock:(void(^)(NSError *))block
+{
+    [self.eventsLiked removeObjectAtIndex:[self.eventsLiked indexOfObject:event.object.objectId]];
+    [self saveToParseWithBlock:block];
+}
+
+- (void)isMutualLike:(UserProfile *)userProfile withBlock:(void(^)(NSError *, BOOL))block
+{
+    if([userProfile.usersLiked containsObject:self.object.objectId])
+    {
+        // match found!
+        block(nil, YES);
+    }
+    [userProfile refreshObjectWithBlock:^(NSError *error)
+    {
+        if(!error)
+        {
+            if([userProfile.usersLiked containsObject:self.object.objectId])
+            {
+                // match found after refreshing!
+                block(error, YES);
+            }
+            else
+                block(error, NO);
+        }
+        else
+        {
+            NSLog(@"Error: %@", error);
+            block(error, NO);
+        }
+    }];
+}
+
+
+
+// -------------------------------------------------------------------------
+// TESTING PURPOSES
+// -------------------------------------------------------------------------
 
 + (void)createSomeArtificialUsers
 {
     //Get 20 of current user's friends from FB and make profiles for each one of them
     NSArray *friends = [LongAssFriendsArray getLongAssFriendsArray];
-     for (id friend in friends)
-     {
-         UserProfile *profile = [[UserProfile alloc] initWithFBResult:friend];
-         NSURL *pictureURL = [NSURL URLWithString: friend[@"picture"]];
-         NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:pictureURL                                                                                   cachePolicy:NSURLRequestUseProtocolCachePolicy                                                                                  timeoutInterval:10.0f];
-         // Run network request asynchronously
-         MyConnection *connection = [[MyConnection alloc] initWithRequest:urlRequest];
-         [connection setCompletionBlock:^(NSData *data, NSError *error)
-          {
-              if(!error)
-              {
-                  [profile.images addObject:data];
-                  [profile saveToParseIncludingImagesWithBlock:^(NSError *error) {}];
-              }
-              else
-                  NSLog(@"Error: %@", error);
-          }];
-         [connection start];
-     }
+    for (id friend in friends)
+    {
+        PFUser *user = [PFUser user];
+        user.username = friend[@"id"];
+        user.password = @"password";
+        user.email = [NSString stringWithFormat:@"%@@example.com", friend[@"id"]];
+        
+        [user signUpInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+            if (!error) {
+                UserProfile *profile = [[UserProfile alloc] initWithFBResult:friend];
+                profile.object[@"PFUser"] = user;
+                NSURL *pictureURL = [NSURL URLWithString: friend[@"picture"]];
+                NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:pictureURL                                                                                   cachePolicy:NSURLRequestUseProtocolCachePolicy                                                                                  timeoutInterval:10.0f];
+                // Run network request asynchronously
+                MyConnection *connection = [[MyConnection alloc] initWithRequest:urlRequest];
+                [connection setCompletionBlock:^(NSData *data, NSError *error)
+                 {
+                     if(!error)
+                     {
+                         [profile.images addObject:data];
+                         [profile saveToParseIncludingImagesWithBlock:^(NSError *error) {}];
+                     }
+                     else
+                         NSLog(@"Error: %@", error);
+                 }];
+                [connection start];
+            } else {
+                NSString *errorString = [error userInfo][@"error"];
+                NSLog(@"%@", errorString);
+            }
+        }];
+    }
+}
+
++ (void) makeEveryoneLikeAllEvents
+{
+    NSMutableArray *allEvents = [[NSMutableArray alloc] init];
+    PFQuery *query = [PFQuery queryWithClassName:@"Event"];
+    [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error)
+    {
+        if(!error)
+        {
+            for (PFObject *object in objects)
+                [allEvents addObject:object.objectId];
+            PFQuery *query2 = [PFQuery queryWithClassName:@"UserProfile"];
+            [query2 findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error)
+             {
+                 if(!error)
+                 {
+                     for (PFObject *object in objects)
+                     {
+                         object[@"eventsLiked"] = allEvents;
+                         [object saveInBackground];
+                     }
+                 }
+             }];
+        }
+        
+    }];
+    
 }
 
 

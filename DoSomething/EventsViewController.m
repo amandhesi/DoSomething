@@ -9,6 +9,7 @@
 #import "EventsViewController.h"
 
 @interface EventsViewController ()
+@property (strong, nonatomic) UserProfile *userProfile;
 @property (strong, nonatomic) NSArray *events;
 @property (strong, nonatomic) NSArray *eventNames;
 @property (weak, nonatomic) IBOutlet UITableView *eventsTableView;
@@ -20,18 +21,24 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
-    [Event getAllForCurrentUserWithBlock:^(NSArray *events, NSError *error) {
-        if(!error)
+    [UserProfile loadCurrentUserFromParseWithBlock:^(UserProfile *profile, NSError *error, NSInteger i) {
+        if(!error && i == -1)
         {
-            self.events = events;
-            NSMutableArray *eventNames = [[NSMutableArray alloc] init];
-            for (Event *event in events)
-                 [eventNames addObject:event.name];
-            self.eventNames = eventNames;
-            [self.eventsTableView reloadData];
+            self.userProfile = profile;
+            [Event getAllForCurrentUserWithBlock:^(NSArray *events, NSError *error) {
+                if(!error)
+                {
+                    self.events = events;
+                    NSMutableArray *eventNames = [[NSMutableArray alloc] init];
+                    for (Event *event in events)
+                        [eventNames addObject:event.name];
+                    self.eventNames = eventNames;
+                    [self.eventsTableView reloadData];
+                }
+                else
+                    NSLog(@"Error: %@", error);
+            }];
         }
-        else
-            NSLog(@"Error: %@", error);
     }];
 }
 
@@ -53,7 +60,28 @@
     
     cell.textLabel.text = [self.eventNames objectAtIndex:indexPath.row];
     cell.imageView.image = [UIImage imageNamed:@"first"];
+    Event *event = self.events[indexPath.row];
+    if([self.userProfile.eventsLiked containsObject:event.object.objectId])
+        cell.accessoryType = UITableViewCellAccessoryCheckmark;
     return cell;
 }
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+    Event *event = self.events[indexPath.row];
+    if([self.userProfile.eventsLiked containsObject:event.object.objectId])
+    {
+        [self.userProfile unlikeEvent:self.events[indexPath.row] withBlock:^(NSError *error) {}];
+        cell.accessoryType = UITableViewCellAccessoryNone;
+        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    }
+    else
+    {
+        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        [self.userProfile likeEvent:self.events[indexPath.row] withBlock:^(NSError *error) {}];
+    }
+}
+
 
 @end

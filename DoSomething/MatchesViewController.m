@@ -60,9 +60,12 @@
 - (void)getPotentialMatches
 {
     PFQuery *query = [PFQuery queryWithClassName:@"UserProfile"];
-    //[query whereKey:@"eventsLiked" containedIn:self.userProfile.eventsLiked];
+    [query whereKey:@"eventsLiked" containedIn:self.userProfile.eventsLiked];
+    
+    // must do string comparison on object id unfortunately
     NSMutableSet *alreadySwiped = [[NSMutableSet alloc] initWithArray:self.userProfile.usersLiked];
     [alreadySwiped addObjectsFromArray:self.userProfile.usersRejected];
+    [alreadySwiped addObject:self.userProfile.object.objectId];
     [query whereKey:@"objectId" notContainedIn:[alreadySwiped allObjects]];
     [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error)
     {
@@ -85,10 +88,18 @@
 {
     if(self.currentMatch)
     {
-        [self.userProfile.usersLiked addObject:self.currentMatch.object.objectId];
-        [self.userProfile saveToParseWithBlock:^(NSError *error) {}];
-        //if(self.currentMatch.usersLiked containsObject:<#(id)#>)
-        
+        [self.userProfile likeUser:self.currentMatch withBlock:^(NSError *error) {}];
+        [self.userProfile isMutualLike:self.currentMatch withBlock:^(NSError *error, BOOL isMutualLike)
+        {
+            if (isMutualLike)
+            {
+                // Mutual like found! Handle it here.
+                UIAlertView *messageAlert = [[UIAlertView alloc]
+                                             initWithTitle:@"Match!" message:[NSString stringWithFormat:@"You've just matched with %@", self.currentMatch.firstname] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+                
+                [messageAlert show];
+            }
+        }];
         [self loadNext];
      }
 }
@@ -97,8 +108,7 @@
 {
     if(self.currentMatch)
     {
-        [self.userProfile.usersRejected addObject:self.currentMatch.object.objectId];
-        [self.userProfile saveToParseWithBlock:^(NSError *error) {}];
+        [self.userProfile rejectUser:self.currentMatch withBlock:^(NSError *error) {}];
         [self loadNext];
     }
 }
