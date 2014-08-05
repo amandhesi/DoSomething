@@ -28,6 +28,7 @@
 @property (nonatomic, strong) NSMutableArray *usersRejected;
 @property (nonatomic, strong) PFObject *object;
 
++ (UserProfile *)currentUser;
 - (instancetype)initWithPFObject:(PFObject *)object;
 + (void)loadCurrentUserFromParseWithBlock:(void(^)(UserProfile *, NSError *, NSInteger))block;
 - (void) saveToParseWithBlock:(void(^)(NSError *))block;

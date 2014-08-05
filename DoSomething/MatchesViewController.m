@@ -39,22 +39,8 @@
 // from the backend
 - (void)doInitialSetup
 {
-    if(!self.userProfile)
-    {
-        [UserProfile loadCurrentUserFromParseWithBlock:^(UserProfile *profile, NSError * error, NSInteger i)
-         {
-             if(!error)
-             {
-                 if(i==-1)
-                 {
-                     self.userProfile = profile;
-                     [self getPotentialMatches];
-                 }
-             }
-             else
-                 NSLog(@"Error: %@", error);
-         }];
-    }
+    self.userProfile = [UserProfile currentUser];
+    [self getPotentialMatches];
 }
 
 - (void)getPotentialMatches
@@ -94,6 +80,7 @@
             if (isMutualLike)
             {
                 // Mutual like found! Handle it here.
+                // Might need to use something like PubNub to send a message to the other user
                 UIAlertView *messageAlert = [[UIAlertView alloc]
                                              initWithTitle:@"Match!" message:[NSString stringWithFormat:@"You've just matched with %@", self.currentMatch.firstname] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
                 

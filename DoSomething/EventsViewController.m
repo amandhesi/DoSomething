@@ -21,24 +21,19 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
-    [UserProfile loadCurrentUserFromParseWithBlock:^(UserProfile *profile, NSError *error, NSInteger i) {
-        if(!error && i == -1)
+    self.userProfile = [UserProfile currentUser];
+    [Event getAllForCurrentUserWithBlock:^(NSArray *events, NSError *error) {
+        if(!error)
         {
-            self.userProfile = profile;
-            [Event getAllForCurrentUserWithBlock:^(NSArray *events, NSError *error) {
-                if(!error)
-                {
-                    self.events = events;
-                    NSMutableArray *eventNames = [[NSMutableArray alloc] init];
-                    for (Event *event in events)
-                        [eventNames addObject:event.name];
-                    self.eventNames = eventNames;
-                    [self.eventsTableView reloadData];
-                }
-                else
-                    NSLog(@"Error: %@", error);
-            }];
+            self.events = events;
+            NSMutableArray *eventNames = [[NSMutableArray alloc] init];
+            for (Event *event in events)
+                [eventNames addObject:event.name];
+            self.eventNames = eventNames;
+            [self.eventsTableView reloadData];
         }
+        else
+            NSLog(@"Error: %@", error);
     }];
 }
 

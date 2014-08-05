@@ -16,6 +16,14 @@
 
 @implementation UserProfile
 
+static UserProfile *currentUser;
+
+// singleton instance for current UserProfile
++ (UserProfile *)currentUser
+{
+    return currentUser;
+}
+
 - (BackendHelper *)backendHelper
 {
     if(!_backendHelper)
@@ -66,87 +74,95 @@
 
 + (void)loadCurrentUserFromParseWithBlock:(void(^)(UserProfile *, NSError *, NSInteger))block
 {
-    PFQuery *query = [PFQuery queryWithClassName:@"UserProfile"];
-    [query whereKey:@"PFUser" equalTo:[PFUser currentUser]];
-    //[query includeKey:@"eventsLiked"];
-    //[query includeKey:@"usersLiked"];
-    //[query includeKey:@"usersRejected"];
-    [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
-        if (!error)
-        {
-            PFObject *object = [objects firstObject];
-            if(object)
+    // this makes sure that the profile is only loaded once to make it a singleton
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        PFQuery *query = [PFQuery queryWithClassName:@"UserProfile"];
+        [query whereKey:@"PFUser" equalTo:[PFUser currentUser]];
+        //[query includeKey:@"eventsLiked"];
+        //[query includeKey:@"usersLiked"];
+        //[query includeKey:@"usersRejected"];
+        [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+            if (!error)
             {
-                UserProfile *profile = [[UserProfile alloc] initWithPFObject:object];
-                block(profile, error, -1);
-                __block int i = 0;
-                for (PFFile *imageFile in object[@"images"])
+                PFObject *object = [objects firstObject];
+                if(object)
                 {
-                    [imageFile getDataInBackgroundWithBlock:^(NSData *data, NSError *error)
+                    currentUser = [[UserProfile alloc] initWithPFObject:object];
+                    block(currentUser, error, -1);
+                    __block int i = 0;
+                    for (PFFile *imageFile in object[@"images"])
+                    {
+                        [imageFile getDataInBackgroundWithBlock:^(NSData *data, NSError *error)
+                        {
+                            if(!error)
+                            {
+                                [currentUser.images addObject:data];
+                                block(currentUser, error,i);
+                                i++;
+                            }
+                            else
+                            {
+                                NSLog(@"Error: %@", error);
+                                block(currentUser,error,0);
+                            }
+                        }];
+                    }
+                }
+                else
+                {
+                    [UserProfile loadCurrentUserFromFacebookWithBlock:^(UserProfile *profile, NSError *error, NSInteger i)
                     {
                         if(!error)
-                        {
-                            [profile.images addObject:data];
-                            block(profile, error,i);
-                            i++;
-                        }
-                        else
-                        {
-                            NSLog(@"Error: %@", error);
-                            block(profile,error,0);
-                        }
+                            [profile saveToParseIncludingImagesWithBlock:^(NSError *error) { }];
+                        block(profile, error,i);
                     }];
+
                 }
             }
             else
             {
-                [UserProfile loadCurrentUserFromFacebookWithBlock:^(UserProfile *profile, NSError *error, NSInteger i)
-                {
-                    if(!error)
-                        [profile saveToParseIncludingImagesWithBlock:^(NSError *error) { }];
-                    block(profile, error,i);
-                }];
-
+                NSLog(@"Error: %@ %@", error, [error userInfo]);
+                block(nil,error,0);
             }
-        }
-        else
-        {
-            NSLog(@"Error: %@ %@", error, [error userInfo]);
-            block(nil,error,0);
-        }
-    }];
+        }];
+    });
 
 }
 
 + (void)loadCurrentUserFromFacebookWithBlock:(void(^)(UserProfile *, NSError *, NSInteger))block
 {
-    [FBRequestConnection startWithGraphPath:@"/me?fields=id,first_name,bio,gender,birthday,picture.height(300)" completionHandler:^(FBRequestConnection *connection, id result, NSError *error)
-    {
-        if (!error)
+    // this makes sure that the profile is only loaded once to make it a singleton
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [FBRequestConnection startWithGraphPath:@"/me?fields=id,first_name,bio,gender,birthday,picture.height(300)" completionHandler:^(FBRequestConnection *connection, id result, NSError *error)
         {
-            UserProfile *profile = [[UserProfile alloc] initWithFBResult:result];
-            profile.object[@"PFUser"] = [PFUser currentUser];
-            block(profile, error, -1);
-            __block int i = 0;
-            NSURL *pictureURL = [NSURL URLWithString: result[@"picture"][@"data"][@"url"]];
-            
-            NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:pictureURL                                                                                   cachePolicy:NSURLRequestUseProtocolCachePolicy                                                                                  timeoutInterval:2.0f];            
-            // Run network request asynchronously
-            MyConnection *connection = [[MyConnection alloc] initWithRequest:urlRequest];
-            [connection setCompletionBlock:^(NSData *data, NSError *error)
+            if (!error)
             {
-                if(!error)
+                currentUser = [[UserProfile alloc] initWithFBResult:result];
+                currentUser.object[@"PFUser"] = [PFUser currentUser];
+                block(currentUser, error, -1);
+                __block int i = 0;
+                NSURL *pictureURL = [NSURL URLWithString: result[@"picture"][@"data"][@"url"]];
+                
+                NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:pictureURL                                                                                   cachePolicy:NSURLRequestUseProtocolCachePolicy                                                                                  timeoutInterval:2.0f];            
+                // Run network request asynchronously
+                MyConnection *connection = [[MyConnection alloc] initWithRequest:urlRequest];
+                [connection setCompletionBlock:^(NSData *data, NSError *error)
                 {
-                    [profile.images addObject:data];
-                    block(profile, error, i);
-                    i++;
-                }
-            }];
-            [connection start];
-        }
-        else
-            [[[BackendHelper alloc] init] handleAuthError:error];
-    }];
+                    if(!error)
+                    {
+                        [currentUser.images addObject:data];
+                        block(currentUser, error, i);
+                        i++;
+                    }
+                }];
+                [connection start];
+            }
+            else
+                [[[BackendHelper alloc] init] handleAuthError:error];
+        }];
+    });
 }
 
 - (void) refreshObjectWithBlock:(void(^)(NSError *))block
