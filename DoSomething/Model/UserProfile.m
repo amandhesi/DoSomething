@@ -45,9 +45,38 @@ static UserProfile *currentUser;
         self.eventsLiked = [[NSMutableArray alloc] initWithArray: object[@"eventsLiked"]];
         self.usersLiked = [[NSMutableArray alloc] initWithArray:object[@"usersLiked"]];
         self.usersRejected = [[NSMutableArray alloc] initWithArray: object[@"usersRejected"]];
+        self.matches = [[NSMutableArray alloc] initWithArray: object[@"matches"]];
         self.images = [[NSMutableArray alloc] init];
     }
     return self;
+}
+
+- (NSMutableArray *)eventsLiked
+{
+    if(!_eventsLiked)
+        _eventsLiked = [[NSMutableArray alloc] init];
+    return _eventsLiked;
+}
+
+- (NSMutableArray *)usersLiked
+{
+    if(!_usersLiked)
+        _usersLiked = [[NSMutableArray alloc] init];
+    return _usersLiked;
+}
+
+- (NSMutableArray *)usersRejected
+{
+    if(!_usersRejected)
+        _usersRejected = [[NSMutableArray alloc] init];
+    return _usersRejected;
+}
+
+- (NSMutableArray *)matches
+{
+    if(!_matches)
+        _matches = [[NSMutableArray alloc] init];
+    return _matches;
 }
 
 - (instancetype) initWithFBResult:(id)result
@@ -67,6 +96,7 @@ static UserProfile *currentUser;
         self.eventsLiked = [[NSMutableArray alloc] init];
         self.usersLiked = [[NSMutableArray alloc] init];
         self.usersRejected = [[NSMutableArray alloc] init];
+        self.matches = [[NSMutableArray alloc] init];
         self.images = [[NSMutableArray alloc] init];
     }
     return self;
@@ -180,6 +210,7 @@ static UserProfile *currentUser;
     self.object[@"eventsLiked"] = self.eventsLiked;
     self.object[@"usersLiked"] = self.usersLiked;
     self.object[@"usersRejected"] = self.usersRejected;
+    self.object[@"matches"] = self.matches;
     [self.object saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
         block(error);
     }];
@@ -195,6 +226,7 @@ static UserProfile *currentUser;
     self.object[@"eventsLiked"] = self.eventsLiked;
     self.object[@"usersLiked"] = self.usersLiked;
     self.object[@"usersRejected"] = self.usersRejected;
+    self.object[@"matches"] = self.matches;
     NSMutableArray *images = [[NSMutableArray alloc] init];
     int i = 0;
     for (NSData *data in self.images)
@@ -239,15 +271,17 @@ static UserProfile *currentUser;
     if([userProfile.usersLiked containsObject:self.object.objectId])
     {
         // match found!
+        [self handleMutualLike:userProfile];
         block(nil, YES);
     }
-    [userProfile refreshObjectWithBlock:^(NSError *error)
+    else [userProfile refreshObjectWithBlock:^(NSError *error)
     {
         if(!error)
         {
             if([userProfile.usersLiked containsObject:self.object.objectId])
             {
                 // match found after refreshing!
+                [self handleMutualLike:userProfile];
                 block(error, YES);
             }
             else
@@ -259,6 +293,14 @@ static UserProfile *currentUser;
             block(error, NO);
         }
     }];
+}
+
+- (void)handleMutualLike:(UserProfile *)userProfile
+{
+    [self.matches addObject:userProfile.object.objectId];
+    [self saveToParseWithBlock:^(NSError *error) {}];
+    
+    // Need to send message to other user (through PubNub or something) to add match
 }
 
 

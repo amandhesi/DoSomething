@@ -181,10 +181,10 @@
             </objects>
             <point key="canvasLocation" x="287" y="884"/>
         </scene>
-        <!--View Controller - Chats-->
+        <!--Chats View Controller - Chats-->
         <scene sceneID="RrL-zX-D0y">
             <objects>
-                <viewController title="Chats" id="DOE-ZD-jGa" sceneMemberID="viewController">
+                <viewController title="Chats" id="DOE-ZD-jGa" customClass="ChatsViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="vMS-gY-leP"/>
                         <viewControllerLayoutGuide type="bottom" id="Ka1-Ai-dGb"/>
@@ -193,41 +193,68 @@
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="iCc-0y-2cE">
-                                <rect key="frame" x="0.0" y="66" width="320" height="451"/>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="44" sectionHeaderHeight="10" sectionFooterHeight="10" translatesAutoresizingMaskIntoConstraints="NO" id="iCc-0y-2cE">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="578"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                                <prototypes>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="ChatCell" id="dej-Qe-z3D">
+                                        <rect key="frame" x="0.0" y="119" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="dej-Qe-z3D" id="rUQ-mD-ZNx">
+                                            <rect key="frame" x="0.0" y="0.0" width="287" height="43"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <segue destination="7cO-2G-tvX" kind="push" identifier="selectChatSegue" id="k1K-ex-Kla"/>
+                                        </connections>
+                                    </tableViewCell>
+                                </prototypes>
+                                <connections>
+                                    <outlet property="dataSource" destination="DOE-ZD-jGa" id="mP6-S1-i4S"/>
+                                    <outlet property="delegate" destination="DOE-ZD-jGa" id="A8L-YD-Xh4"/>
+                                </connections>
                             </tableView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
                     <navigationItem key="navigationItem" title="Chats" id="ZQK-TS-uC2"/>
                     <connections>
-                        <segue destination="b5f-4e-fzT" kind="push" id="MrF-Gs-Btf"/>
+                        <outlet property="chatsTableView" destination="iCc-0y-2cE" id="zaq-6e-Z9b"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="WVP-AP-tXZ" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1363" y="564"/>
         </scene>
-        <!--View Controller - Chat-->
-        <scene sceneID="EMJ-B2-8dF">
+        <!--Selected Chat View Controller-->
+        <scene sceneID="t9T-Mt-rl1">
             <objects>
-                <viewController title="Chat" id="b5f-4e-fzT" sceneMemberID="viewController">
+                <viewController id="7cO-2G-tvX" customClass="SelectedChatViewController" sceneMemberID="viewController">
                     <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="g7D-6y-9YR"/>
-                        <viewControllerLayoutGuide type="bottom" id="vD7-Ly-q3b"/>
+                        <viewControllerLayoutGuide type="top" id="HH3-HU-IVt"/>
+                        <viewControllerLayoutGuide type="bottom" id="Htn-4e-6Ti"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="umY-Bc-vcH">
+                    <view key="view" contentMode="scaleToFill" id="S5b-ba-sUe">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Skx-tn-JeC" customClass="UIBubbleTableView">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                            </view>
+                        </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
-                    <navigationItem key="navigationItem" title="Chat" id="fGX-gM-GCh"/>
+                    <navigationItem key="navigationItem" id="kgf-M2-qZD"/>
+                    <connections>
+                        <outlet property="bubbleTable" destination="Skx-tn-JeC" id="4G0-8C-nrk"/>
+                    </connections>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="3FR-wL-clR" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="IdA-jf-5hD" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1859" y="564"/>
+            <point key="canvasLocation" x="1816" y="563"/>
         </scene>
         <!--Login View Controller - Login-->
         <scene sceneID="dQQ-Hp-QTc">

@@ -26,6 +26,7 @@
 @property (nonatomic, strong) NSMutableArray *eventsLiked;
 @property (nonatomic, strong) NSMutableArray *usersLiked;
 @property (nonatomic, strong) NSMutableArray *usersRejected;
+@property (nonatomic, strong) NSMutableArray *matches;
 @property (nonatomic, strong) PFObject *object;
 
 + (UserProfile *)currentUser;

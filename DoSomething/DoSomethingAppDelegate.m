@@ -18,6 +18,7 @@
                   clientKey:@"tEeyA3ZRNUFP28CpAXgiH0SjIdmQ4YA0uyRmMAo2"];
     [PFAnalytics trackAppOpenedWithLaunchOptions:launchOptions];
     [PFFacebookUtils initializeFacebook];
+    [PubNub setDelegate:self];
     return YES;
 }
 
@@ -37,6 +38,18 @@
 {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     [[PFFacebookUtils session] close];
+}
+
+- (void)pubnubClient:(PubNub *)client didConnectToOrigin:(NSString *)origin {
+    NSLog(@"DELEGATE: Connected to  origin: %@", origin);
+}
+
+- (void)pubnubClient:(PubNub *)client didSubscribeOnChannels:(NSArray *)channels {
+    NSLog(@"DELEGATE: Subscribed to channel:%@", channels);
+}
+// #2 Delegate looks for message receive events
+- (void)pubnubClient:(PubNub *)client didReceiveMessage:(PNMessage *)message {
+    NSLog(@"DELEGATE: Message received.");
 }
 
 @end

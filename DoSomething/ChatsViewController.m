@@ -10,30 +10,73 @@
 
 @interface ChatsViewController ()
 
+@property (strong, nonatomic) UserProfile *userProfile;
+@property (weak, nonatomic) IBOutlet UITableView *chatsTableView;
+@property (strong, nonatomic) NSMutableArray *matches;
+@property (strong, nonatomic) NSMutableArray *matchNames;
+
 @end
 
 @implementation ChatsViewController
-
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Custom initialization
-    }
-    return self;
-}
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+    //[Chat addSomeChats];
+    self.userProfile = [UserProfile currentUser];
+    self.matches = [[NSMutableArray alloc] init];
+    self.matchNames = [[NSMutableArray alloc] init];
+    PFQuery *query = [PFQuery queryWithClassName:@"UserProfile"];
+    [query whereKey:@"objectId" containedIn:self.userProfile.matches];
+    [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error)
+     {
+         if(!error)
+         {
+             for (PFObject *object in objects)
+             {
+                 UserProfile *profile = [[UserProfile alloc] initWithPFObject:object];
+                 NSLog(@"%@", profile.firstname);
+                 [self.matches addObject:profile];
+                 [self.matchNames addObject:profile.firstname];
+             }
+             [self.chatsTableView reloadData];
+         }
+         else
+             NSLog(@"Error : %@", error);
+     }];
 }
 
-- (void)didReceiveMemoryWarning
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+    return [self.matches count];
 }
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *chatCellIdentifier = @"ChatCell";
+    
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:chatCellIdentifier];
+    
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:chatCellIdentifier];
+    }
+    
+    cell.textLabel.text = [self.matchNames objectAtIndex:indexPath.row];
+    cell.imageView.image = [UIImage imageNamed:@"first"];
+    return cell;
+}
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([segue.identifier isEqualToString:@"selectChatSegue"])
+    {
+        SelectedChatViewController *destViewController = segue.destinationViewController;
+        NSIndexPath *indexPath = [self.chatsTableView indexPathForSelectedRow];
+        destViewController.otherProfile = self.matches[indexPath.row];
+    }
+}
+
 
 /*
 #pragma mark - Navigation

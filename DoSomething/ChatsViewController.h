@@ -7,7 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "UserProfile.h"
+#import "SelectedChatViewController.h"
+//#import "Chat.h"
 
-@interface ChatsViewController : UIViewController
+@interface ChatsViewController : UIViewController<UITableViewDelegate, UITableViewDataSource>
 
 @end

@@ -10,7 +10,7 @@
 #import <Parse/Parse.h>
 
 
-@interface DoSomethingAppDelegate : UIResponder <UIApplicationDelegate>
+@interface DoSomethingAppDelegate : UIResponder <UIApplicationDelegate, PNDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 
